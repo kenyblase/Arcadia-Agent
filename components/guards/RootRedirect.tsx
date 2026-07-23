@@ -2,22 +2,24 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 import LoadingSpinner from "../ui/LoadingSpinner";
+import useAuthStatus from "@/hooks/auth/useAuthStatus";
 
 export default function RootRedirect() {
   const router = useRouter();
 
-  useEffect(() => {
-    const token = localStorage.getItem("arcadia-token");
+  const { status } = useAuthStatus();
 
-    if (token) {
+  useEffect(() => {
+    if (status === "authenticated") {
       router.replace("/dashboard");
-    } else {
+    }
+
+    if (status === "unauthenticated") {
       router.replace("/auth/login");
     }
-  }, [router]);
+  }, [status, router]);
 
-  return (
-    <LoadingSpinner/>
-  );
+  return <LoadingSpinner />;
 }

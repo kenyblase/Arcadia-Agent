@@ -25,6 +25,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      localStorage.removeItem("arcadia-token");
       useAuthStore.getState().logout();
 
       if (typeof window !== "undefined") {

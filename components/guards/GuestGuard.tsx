@@ -1,32 +1,34 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import LoadingSpinner from "../ui/LoadingSpinner";
 
-interface GuestGuardProps {
+import LoadingSpinner from "../ui/LoadingSpinner";
+import useAuthStatus from "@/hooks/auth/useAuthStatus";
+
+interface Props {
   children: ReactNode;
 }
 
-export default function GuestGuard({ children }: GuestGuardProps) {
+export default function GuestGuard({
+  children,
+}: Props) {
   const router = useRouter();
-  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const { status } = useAuthStatus();
 
   useEffect(() => {
-    const token = localStorage.getItem("arcardia-token");
-
-    if (token) {
+    if (status === "authenticated") {
       router.replace("/dashboard");
-      return;
     }
+  }, [status, router]);
 
-    setCheckingAuth(false);
-  }, [router]);
+  if (status === "loading") {
+    return <LoadingSpinner />;
+  }
 
-  if (checkingAuth) {
-    return (
-      <LoadingSpinner/>
-    );
+  if (status === "authenticated") {
+    return <LoadingSpinner />;
   }
 
   return <>{children}</>;

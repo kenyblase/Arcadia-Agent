@@ -1,32 +1,34 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import LoadingSpinner from "../ui/LoadingSpinner";
 
-interface AuthGuardProps {
+import LoadingSpinner from "../ui/LoadingSpinner";
+import useAuthStatus from "@/hooks/auth/useAuthStatus";
+
+interface Props {
   children: ReactNode;
 }
 
-export default function AuthGuard({ children }: AuthGuardProps) {
+export default function AuthGuard({
+  children,
+}: Props) {
   const router = useRouter();
-  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const { status } = useAuthStatus();
 
   useEffect(() => {
-    const token = localStorage.getItem("arcadia-token");
-
-    if (!token) {
+    if (status === "unauthenticated") {
       router.replace("/auth/login");
-      return;
     }
+  }, [status, router]);
 
-    setCheckingAuth(false);
-  }, [router]);
+  if (status === "loading") {
+    return <LoadingSpinner />;
+  }
 
-  if (checkingAuth) {
-    return (
-      <LoadingSpinner/>
-    );
+  if (status === "unauthenticated") {
+    return <LoadingSpinner />;
   }
 
   return <>{children}</>;

@@ -19,9 +19,7 @@ export default function useLogin() {
       email: string;
       password: string;
     }) => {
-      const response = await authApi.login(email, password );
-
-      console.log(response.data.data.agent)
+      const response = await authApi.login(email, password);
       return response.data
     },
 
@@ -32,9 +30,9 @@ export default function useLogin() {
     },
 
     onSuccess: (data, _, context) => {
-      localStorage.setItem("arcadia-token", data.token);
+      localStorage.setItem("arcadia-token", data.data.token);
 
-      loginStore(data.agent)
+      loginStore(data.data.agent)
 
       toast.success("Login successful", {
         id: context.toastId,
