@@ -1,12 +1,9 @@
 "use client";
 
 import {
-  Building2,
   Users,
   Wallet,
-  UserCheck,
   ArrowUpRight,
-  Banknote,
   BanknoteArrowDown,
   BanknoteArrowUp,
 } from "lucide-react";
@@ -17,91 +14,100 @@ import DataTable from "@/components/dashboard/DataTable";
 import MobileListCard from "@/components/dashboard/MobileListCard";
 import StatusBadge from "@/components/dashboard/StatusBadge";
 import EmptyState from "@/components/dashboard/EmptyState";
-
-type Transaction = {
-  id: number;
-  customer: string;
-  property: string;
-  amount: string;
-  status: string;
-  date: string;
-};
+import { useGetDashboardAnalytics } from "@/hooks/dashboard/useGetDashboardAnalytics";
+import Skeleton from "@/components/dashboard/Skeleton";
+import { useGetAgentCommissionHistory } from "@/hooks/dashboard/useGetAgentCommissionHistory";
+import ErrorState from "@/components/dashboard/ErrorState";
 
 export default function DashboardPage() {
-  // Replace with React Query later
-  const transactions: Transaction[] = [
-    {
-      id: 1,
-      customer: "John Doe",
-      property: "Arcadia Estate",
-      amount: "₦2,500,000",
-      status: "success",
-      date: "12 Jul 2026",
-    },
-    {
-      id: 2,
-      customer: "Mary Johnson",
-      property: "Green Villa",
-      amount: "₦1,800,000",
-      status: "pending",
-      date: "10 Jul 2026",
-    },
-    {
-      id: 3,
-      customer: "David Williams",
-      property: "Prime Gardens",
-      amount: "₦3,200,000",
-      status: "failed",
-      date: "09 Jul 2026",
-    },
-    {
-      id: 4,
-      customer: "Sarah Smith",
-      property: "Arcadia Estate",
-      amount: "₦950,000",
-      status: "processing",
-      date: "08 Jul 2026",
-    },
-  ];
+  const {
+    data: dashboardAnalytics,
+    isLoading: isAnalyticsLoading,
+    isError: isAnalyticsError,
+  } = useGetDashboardAnalytics();
+
+  const {
+    data: recentCommissions,
+    isLoading: isCommissionsLoading,
+    isError: isCommissionsError,
+  } = useGetAgentCommissionHistory(1, 5);
+
+  type Commission = {
+    _id: string
+    user: { email: string }
+    purchase: {
+      property: { propertyName: string }
+      plot: { plotNumber: string }
+    }
+    amount: number
+    percentage: number
+    commission: number
+    createdAt: string
+  }
+
+  const formatMongoDate = (dateString: string) => {
+      if (!dateString) return "";
+
+      const date = new Date(dateString);
+
+      const formattedDate = new Intl.DateTimeFormat("en-US", {
+        month: "short",   // Oct
+        day: "2-digit",   // 12
+        year: "numeric",  // 2023
+      }).format(date);
+
+      return `${formattedDate}`;
+    };
 
   return (
     <div className="space-y-8">
 
       <PageHeader
         title="Dashboard"
-        description="Welcome back. Here's an overview of your platform."
+        description="Welcome back. Here's an overview of your account."
       />
 
       {/* ================= STATISTICS ================= */}
 
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      {isAnalyticsLoading ? (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} />
+          ))}
+        </div>
+      ) : isAnalyticsError ? (
+        <div className="bg-white rounded-xl border p-8 text-center">
+          <p className="text-red-500">
+            Failed to load dashboard analytics.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          <StatCard
+            title="Wallet Balance"
+            value={`₦${dashboardAnalytics.walletBalance.toLocaleString()}`}
+            icon={<Wallet className="text-[#FFBB06]" size={22} />}
+          />
 
-        <StatCard
-          title="Wallet Balance"
-          value='₦1.456M'
-          icon={<Wallet className="text-[#FFBB06]" size={22} />}
-        />
+          <StatCard
+            title="Referrals"
+            value={dashboardAnalytics.totalReferrals}
+            icon={<Users className="text-[#FFBB06]" size={22} />}
+          />
 
-        <StatCard
-          title="Referrals"
-          value={1485}
-          icon={<Users className="text-[#FFBB06]" size={22} />}
-        />
+          <StatCard
+            title="Total Commission Earned"
+            value={`₦${dashboardAnalytics.totalCommissionEarned.toLocaleString()}`}
+            icon={<BanknoteArrowUp className="text-[#FFBB06]" size={22} />}
+          />
 
-
-        <StatCard
-          title="Total Commission Earned"
-          value="₦145.6M"
-          icon={<BanknoteArrowUp className="text-[#FFBB06]" size={22} />}
-        />
-        
-        <StatCard
-          title="Total Withdrawn"
-          value={42}
-          icon={<BanknoteArrowDown className="text-[#FFBB06]" size={22} />}
-        />
-
-      </div>
+          <StatCard
+            title="Total Withdrawn"
+            value={`₦${dashboardAnalytics.totalWithdrawn.toLocaleString()}`}
+            icon={<BanknoteArrowDown className="text-[#FFBB06]" size={22} />}
+          />
+        </div>
+      )}
 
       {/* ================= RECENT TRANSACTIONS ================= */}
 
@@ -112,88 +118,111 @@ export default function DashboardPage() {
           <div>
 
             <h2 className="text-xl font-semibold">
-              Recent Transactions
+              Recent Commissions
             </h2>
 
             <p className="text-sm text-gray-500">
-              Latest payments made on the platform.
+              Latest commissions earned from your referrals.
             </p>
 
           </div>
 
         </div>
 
-        {transactions.length === 0 ? (
-          <EmptyState title="No transactions found." />
-        ) : (
+        {isCommissionsLoading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} />
+            ))}
+          </div>
+        ) : isCommissionsError ? <ErrorState title="Failed to load recent commissions."/> : recentCommissions.commissionHistory.length === 0 ? (
+          <EmptyState title="No commissions found." />
+        )  : (
           <>
             {/* Desktop */}
 
             <DataTable
               columns={[
                 {
-                  header: "Customer",
-                  key: "customer",
+                  header: "User Email",
+                  key: "email",
                 },
                 {
                   header: "Property",
                   key: "property",
                 },
                 {
+                  header: "Plot",
+                  key: "plot",
+                },
+                {
                   header: "Amount",
                   key: "amount",
                 },
                 {
-                  header: "Status",
-                  key: "status",
+                  header: "Percentage",
+                  key: "percentage",
+                },
+                {
+                  header: "Commission",
+                  key: "commission",
                 },
                 {
                   header: "Date",
                   key: "date",
                 },
-                {
-                  header: "",
-                  key: "action",
-                },
+                // {
+                //   header: "",
+                //   key: "action",
+                // },
               ]}
-              data={transactions}
+              data={recentCommissions.commissionHistory}
               renderCell={(item, key) => {
-                const transaction = item as Transaction;
+                const commission = item as Commission;
 
                 switch (key) {
-                  case "customer":
+                  case "email":
                     return (
                       <p className="font-medium">
-                        {transaction.customer}
+                        {commission.user.email}
                       </p>
                     );
 
                   case "property":
-                    return transaction.property;
+                    return commission.purchase.property.propertyName;
+
+                  case "plot":
+                    return commission.purchase.plot.plotNumber;
 
                   case "amount":
                     return (
                       <span className="font-semibold">
-                        {transaction.amount}
+                        ₦{commission.amount}
                       </span>
                     );
 
-                  case "status":
+                  case "percentage":
                     return (
-                      <StatusBadge
-                        status={transaction.status}
-                      />
+                      <span className="font-semibold">
+                        {commission.percentage}%
+                      </span>
+                    );
+                  case "commission":
+                    return (
+                      <span className="font-semibold">
+                        ₦{commission.commission}
+                      </span>
                     );
 
                   case "date":
-                    return transaction.date;
+                    return formatMongoDate(commission.createdAt);
 
-                  case "action":
-                    return (
-                      <button className="text-[#FFBB06] hover:text-yellow-600">
-                        <ArrowUpRight size={18} />
-                      </button>
-                    );
+                  // case "action":
+                  //   return (
+                  //     <button className="text-[#FFBB06] hover:text-yellow-600">
+                  //       <ArrowUpRight size={18} />
+                  //     </button>
+                  //   );
 
                   default:
                     return null;
@@ -205,39 +234,42 @@ export default function DashboardPage() {
 
             <div className="space-y-4 md:hidden">
 
-              {transactions.map((transaction) => (
+              {recentCommissions.commissionHistory.map((commission: Commission) => (
                 <MobileListCard
-                  key={transaction.id}
-                  title={transaction.customer}
-                  subtitle={transaction.property}
-                  right={
-                    <StatusBadge
-                      status={transaction.status}
-                    />
-                  }
+                  key={commission._id}
+                  title={`User: ${commission.user.email}`}
+                  subtitle={`Property Details: ${commission.purchase.property.propertyName} ${commission.purchase.plot.plotNumber}`}
                   footer={
                     <div className="flex justify-between items-center">
 
                       <div>
 
-                        <p className="text-lg font-semibold">
-                          {transaction.amount}
+                        <p className="text-lg">
+                          Amount: ₦{commission.amount}
+                        </p>
+
+                        <p className="text-lg">
+                          Percentage: {commission.percentage}%
+                        </p>
+
+                        <p className="text-lg">
+                          Commission: ₦{commission.commission}
                         </p>
 
                         <p className="text-xs text-gray-500">
-                          {transaction.date}
+                          {formatMongoDate(commission.createdAt)}
                         </p>
 
                       </div>
 
-                      <div className="h-10 w-10 rounded-full bg-[#FFF7E1] flex items-center justify-center">
+                      {/* <div className="h-10 w-10 rounded-full bg-[#FFF7E1] flex items-center justify-center">
 
                         <ArrowUpRight
                           className="text-[#FFBB06]"
                           size={18}
                         />
 
-                      </div>
+                      </div> */}
 
                     </div>
                   }

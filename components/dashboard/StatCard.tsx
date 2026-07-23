@@ -20,11 +20,11 @@ export default function StatCard({
 
         <div>
 
-          <p className="text-sm text-[#667085]">
+          <p className="text-sm md:text-lg text-[#667085]">
             {title}
           </p>
 
-          <h2 className="mt-2 text-2xl font-bold text-[#0D0900]">
+          <h2 className="mt-2 text-lg md:text-2xl font-bold text-[#0D0900]">
             {value}
           </h2>
 

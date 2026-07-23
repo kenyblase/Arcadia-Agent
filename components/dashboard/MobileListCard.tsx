@@ -28,12 +28,12 @@ export default function MobileListCard({
 
         <div>
 
-          <h3 className="font-semibold">
+          <h3 className="font-medium">
             {title}
           </h3>
 
           {subtitle && (
-            <p className="text-sm text-[#667085] mt-1">
+            <p className="text-sm text-[#667085] mt-1 capitalize">
               {subtitle}
             </p>
           )}
