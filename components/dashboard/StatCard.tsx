@@ -31,7 +31,7 @@ export default function StatCard({
         </div>
 
         <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center"
+          className="w-12 h-12 rounded-xl md:flex items-center justify-center hidden"
           style={{ backgroundColor: `${color}20` }}
         >
           {icon}

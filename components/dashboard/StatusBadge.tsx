@@ -31,7 +31,7 @@ export default function StatusBadge({
 
   return (
     <span
-      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+      className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${
         colors[status as keyof typeof colors] ??
         "bg-gray-100 text-gray-700"
       }`}

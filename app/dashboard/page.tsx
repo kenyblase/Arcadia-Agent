@@ -18,6 +18,7 @@ import { useGetDashboardAnalytics } from "@/hooks/dashboard/useGetDashboardAnaly
 import Skeleton from "@/components/dashboard/Skeleton";
 import { useGetAgentCommissionHistory } from "@/hooks/dashboard/useGetAgentCommissionHistory";
 import ErrorState from "@/components/dashboard/ErrorState";
+import { useAuthStore } from "@/lib/store/authStore";
 
 export default function DashboardPage() {
   const {
@@ -31,6 +32,8 @@ export default function DashboardPage() {
     isLoading: isCommissionsLoading,
     isError: isCommissionsError,
   } = useGetAgentCommissionHistory(1, 5);
+
+  const { agent } = useAuthStore()
 
   type Commission = {
     _id: string
@@ -64,7 +67,7 @@ export default function DashboardPage() {
 
       <PageHeader
         title="Dashboard"
-        description="Welcome back. Here's an overview of your account."
+        description={`Welcome back ${agent?.firstName} ${agent?.lastName}. Here's an overview of your account.`}
       />
 
       {/* ================= STATISTICS ================= */}
@@ -189,15 +192,23 @@ export default function DashboardPage() {
                     );
 
                   case "property":
-                    return commission.purchase.property.propertyName;
+                    return (
+                      <span className="font-medium capitalize">
+                        {commission.purchase.property.propertyName}
+                      </span>
+                    );
 
                   case "plot":
-                    return commission.purchase.plot.plotNumber;
+                    return (
+                      <span className="font-medium capitalize">
+                        {commission.purchase.plot.plotNumber}
+                      </span>
+                    );
 
                   case "amount":
                     return (
                       <span className="font-semibold">
-                        ₦{commission.amount}
+                        ₦{commission.amount.toLocaleString()}
                       </span>
                     );
 
@@ -210,7 +221,7 @@ export default function DashboardPage() {
                   case "commission":
                     return (
                       <span className="font-semibold">
-                        ₦{commission.commission}
+                        ₦{commission.commission.toLocaleString()}
                       </span>
                     );
 
